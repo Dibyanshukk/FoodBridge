@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FoodBridge – Zero Hunger Platform</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+  <style>
+    /* ─── TOKENS ─────────────────────────────── */
+    :root {
+      --bg:        #0d1a0f;
+      --surface:   #131f15;
+      --card:      #1a2b1d;
+      --border:    #2a3f2d;
+      --green:     #4ade80;
+      --green-dim: #22c55e;
+      --amber:     #fbbf24;
+      --red:       #f87171;
+      --text:      #e8f5e9;
+      --muted:     #7a9b7e;
+      --radius:    14px;
+      --shadow:    0 4px 24px rgba(0,0,0,.5);
+    }
+
+    /* ─── RESET ──────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      min-height: 100vh;
+    }
+
+    /* ─── NOISE OVERLAY ──────────────────────── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events: none; z-index: 0; opacity: .4;
+    }
+
+    /* ─── NAV ────────────────────────────────── */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(13,26,15,.92);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      display: flex; align-items: center; gap: 0;
+    }
+    .nav-logo {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800; font-size: 1.25rem;
+      color: var(--green);
+      padding: 1rem 1.5rem 1rem 0;
+      border-right: 1px solid var(--border);
+      margin-right: 1.5rem;
+      letter-spacing: -.5px;
+    }
+    .nav-logo span { color: var(--text); font-weight: 400; }
+    .nav-tabs { display: flex; gap: 0; flex: 1; overflow-x: auto; }
+    .nav-tab {
+      background: none; border: none; cursor: pointer;
+      color: var(--muted); font-family: 'DM Sans', sans-serif;
+      font-size: .875rem; font-weight: 500;
+      padding: 1rem 1.1rem;
+      border-bottom: 2px solid transparent;
+      transition: color .2s, border-color .2s;
+      white-space: nowrap;
+    }
+    .auth-box {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-left: auto;
+    }
+    .nav-tab:hover { color: var(--text); }
+    .nav-tab.active { color: var(--green); border-bottom-color: var(--green); }
+
+    /* ─── LAYOUT ──────────────────────────────── */
+    .page { display: none; padding: 2.5rem 2rem; max-width: 1100px; margin: 0 auto; }
+    .page.active { display: block; animation: fadeUp .35s ease; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ─── HERO (HOME) ──────────────────────────── */
+    .hero {
+      text-align: center;
+      padding: 4rem 1rem 3rem;
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: .5rem;
+      background: rgba(74,222,128,.1); border: 1px solid rgba(74,222,128,.3);
+      color: var(--green); font-size: .75rem; font-weight: 600; letter-spacing: 1px;
+      text-transform: uppercase; padding: .35rem .9rem; border-radius: 99px;
+      margin-bottom: 1.5rem;
+    }
+    .hero h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(2.2rem, 6vw, 4rem);
+      font-weight: 800; line-height: 1.1;
+      letter-spacing: -2px; margin-bottom: 1rem;
+    }
+    .hero h1 em { font-style: normal; color: var(--green); }
+    .hero p {
+      color: var(--muted); max-width: 520px; margin: 0 auto 2.5rem;
+      line-height: 1.7; font-size: 1.05rem;
+    }
+    .hero-cta { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .btn {
+      display: inline-flex; align-items: center; gap: .5rem;
+      padding: .7rem 1.5rem; border-radius: 8px;
+      font-family: 'DM Sans', sans-serif; font-weight: 500; font-size: .9rem;
+      cursor: pointer; border: none; transition: all .2s;
+    }
+    .btn-primary {
+      background: var(--green); color: #0d1a0f;
+    }
+    .btn-primary:hover { background: var(--green-dim); transform: translateY(-1px); }
+    .btn-outline {
+      background: transparent; color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-outline:hover { border-color: var(--green); color: var(--green); }
+
+    /* ─── STAT GRID ───────────────────────────── */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem; margin-top: 3rem;
+    }
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      text-align: center;
+      transition: border-color .2s, transform .2s;
+    }
+    .stat-card:hover { border-color: var(--green); transform: translateY(-2px); }
+    .stat-num {
+      font-family: 'Syne', sans-serif; font-size: 2.5rem; font-weight: 800;
+      color: var(--green); line-height: 1;
+    }
+    .stat-label { color: var(--muted); font-size: .8rem; margin-top: .4rem; text-transform: uppercase; letter-spacing: .5px; }
+
+    /* ─── SECTION HEADER ───────────────────────── */
+    .section-header {
+      display: flex; align-items: baseline; justify-content: space-between;
+      margin-bottom: 1.5rem; gap: 1rem; flex-wrap: wrap;
+    }
+    .section-title {
+      font-family: 'Syne', sans-serif; font-size: 1.4rem; font-weight: 700;
+    }
+    .section-sub { color: var(--muted); font-size: .85rem; }
+
+    /* ─── FORM CARD ─────────────────────────────── */
+    .form-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem;
+      max-width: 560px;
+    }
+    .form-grid { display: grid; gap: 1rem; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    @media (max-width: 500px) { .form-row { grid-template-columns: 1fr; } }
+
+    label { display: block; font-size: .8rem; color: var(--muted); margin-bottom: .4rem; font-weight: 500; text-transform: uppercase; letter-spacing: .4px; }
+    input, select, textarea {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: .9rem;
+      padding: .65rem .9rem;
+      outline: none;
+      transition: border-color .2s;
+    }
+    input:focus, select:focus, textarea:focus { border-color: var(--green); }
+    select option { background: var(--surface); }
+    textarea { resize: vertical; min-height: 80px; }
+
+    .submit-btn {
+      width: 100%;
+      background: var(--green); color: #0d1a0f;
+      padding: .8rem; border-radius: 8px;
+      font-family: 'Syne', sans-serif; font-size: .95rem; font-weight: 700;
+      border: none; cursor: pointer;
+      transition: background .2s, transform .1s;
+      margin-top: .5rem;
+    }
+    .submit-btn:hover { background: var(--green-dim); }
+    .submit-btn:active { transform: scale(.99); }
+
+    /* ─── TOAST ──────────────────────────────── */
+    #toast {
+      position: fixed; bottom: 2rem; right: 2rem;
+      background: var(--green); color: #0d1a0f;
+      padding: .8rem 1.4rem; border-radius: 8px;
+      font-weight: 600; font-size: .9rem;
+      box-shadow: var(--shadow);
+      transform: translateY(120%); opacity: 0;
+      transition: all .35s cubic-bezier(.34,1.56,.64,1);
+      z-index: 999; max-width: 320px;
+    }
+    #toast.show { transform: translateY(0); opacity: 1; }
+    #toast.error { background: var(--red); }
+
+    /* ─── TABLE ──────────────────────────────── */
+    .table-wrap { overflow-x: auto; }
+    table {
+      width: 100%; border-collapse: collapse;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    th {
+      background: var(--surface);
+      color: var(--muted); font-size: .75rem;
+      text-transform: uppercase; letter-spacing: .5px;
+      padding: .85rem 1rem; text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    td {
+      padding: .85rem 1rem;
+      border-bottom: 1px solid rgba(42,63,45,.6);
+      font-size: .875rem; vertical-align: middle;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(74,222,128,.03); }
+
+    /* ─── BADGE ──────────────────────────────── */
+    .badge {
+      display: inline-block;
+      padding: .2rem .7rem; border-radius: 99px;
+      font-size: .72rem; font-weight: 600; letter-spacing: .3px;
+    }
+    .badge-green  { background: rgba(74,222,128,.15); color: var(--green); }
+    .badge-amber  { background: rgba(251,191,36,.15);  color: var(--amber); }
+    .badge-red    { background: rgba(248,113,113,.15); color: var(--red); }
+    .badge-blue   { background: rgba(96,165,250,.15);  color: #60a5fa; }
+    .badge-purple { background: rgba(167,139,250,.15); color: #a78bfa; }
+
+    /* ─── LOADING ────────────────────────────── */
+    .loading {
+      text-align: center; color: var(--muted);
+      padding: 3rem; font-size: .9rem;
+    }
+    .spinner {
+      width: 28px; height: 28px;
+      border: 2px solid var(--border);
+      border-top-color: var(--green);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      margin: 0 auto .75rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ─── DISTRIBUTE MODAL ───────────────────── */
+    .assign-btn {
+      background: rgba(74,222,128,.1);
+      border: 1px solid rgba(74,222,128,.3);
+      color: var(--green); font-size: .78rem; font-weight: 600;
+      padding: .3rem .8rem; border-radius: 6px; cursor: pointer;
+      transition: background .2s;
+    }
+    .assign-btn:hover { background: rgba(74,222,128,.22); }
+
+    /* ─── EMPTY STATE ────────────────────────── */
+    .empty {
+      text-align: center; padding: 3rem 1rem;
+      color: var(--muted); font-size: .9rem;
+    }
+    .empty-icon { font-size: 2.5rem; margin-bottom: .75rem; }
+
+    /* ─── SDG BANNER ──────────────────────────── */
+    .sdg-banner {
+      display: flex; align-items: center; gap: 1.5rem;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1.5rem 2rem; margin-top: 3rem;
+      flex-wrap: wrap;
+    }
+    .sdg-icon {
+      width: 60px; height: 60px; border-radius: 10px;
+      background: linear-gradient(135deg, #FFC107, #FF5722);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.8rem; flex-shrink: 0;
+    }
+    .sdg-text h3 { font-family: 'Syne', sans-serif; font-size: 1rem; margin-bottom: .3rem; }
+    .sdg-text p  { color: var(--muted); font-size: .85rem; line-height: 1.6; }
+  </style>
+</head>
+<body>
+
+<!-- ──────────────────── NAV ──────────────────── -->
+<nav>
+  <div class="nav-logo">Food<span>Bridge</span></div>
+
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('home')">🏠 Home</button>
+
+    <button id="nav-donate" class="nav-tab" onclick="showPage('donate')">
+      🍱 Donate Food
+    </button>
+
+    <button id="nav-request" class="nav-tab" onclick="showPage('request')">
+      🙏 Request Food
+    </button>
+
+    <button class="nav-tab" onclick="showPage('donations')">
+      📦 View Donations
+    </button>
+
+    <button id="nav-distribute" class="nav-tab" onclick="showPage('distribute')">
+      🚴 Distributions
+    </button>
+  </div>
+
+  <!-- THIS IS WHAT YOU ARE MISSING -->
+  <div id="authSection" class="auth-box"></div>
+</nav>
+
+<!-- ──────────────────── TOAST ──────────────────── -->
+<div id="toast"></div>
+
+<!-- ══════════════════════════════════════════════
+     PAGE: HOME
+═══════════════════════════════════════════════ -->
+<div id="page-home" class="page active">
+  <div class="hero">
+    <div class="hero-badge">🌱 UN SDG 2 – Zero Hunger</div>
+    <h1>Bridging the gap between<br/><em>food surplus & need</em></h1>
+    <p>FoodBridge connects food donors, NGOs, and volunteers to eliminate food wastage and ensure every meal reaches someone who truly needs it.</p>
+    <div class="hero-cta">
+      <button class="btn btn-primary" onclick="showPage('donate')">🍱 Donate Food</button>
+      <button class="btn btn-outline" onclick="showPage('donations')">📦 View Donations</button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stat-grid" id="stat-grid">
+    <div class="stat-card"><div class="stat-num" id="s-donations">–</div><div class="stat-label">Total Donations</div></div>
+    <div class="stat-card"><div class="stat-num" id="s-requests">–</div><div class="stat-label">Food Requests</div></div>
+    <div class="stat-card"><div class="stat-num" id="s-delivered">–</div><div class="stat-label">Deliveries Made</div></div>
+    <div class="stat-card"><div class="stat-num" id="s-volunteers">–</div><div class="stat-label">Volunteers</div></div>
+  </div>
+
+  <div class="sdg-banner">
+  <div class="sdg-icon">🎯</div>
+
+  <div class="sdg-text">
+    <h3>United Nations Sustainable Development Goal 2</h3>
+    <p>
+      End hunger, achieve food security and improved nutrition, and promote sustainable agriculture.
+      FoodBridge directly supports SDG 2 by creating a real-time bridge between food surplus and food scarcity.
+    </p>
+  </div>
+</div>
+
+<!-- ✅ ADD HERE (OUTSIDE banner) -->
+<div style="margin-top: 2rem;">
+  <div class="section-title">🏆 Top Donors</div>
+  <div id="top-donors"></div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     PAGE: DONATE
+═══════════════════════════════════════════════ -->
+<div id="page-donate" class="page">
+  <div class="section-header">
+    <div>
+      <div class="section-title">Donate Food</div>
+      <div class="section-sub">Fill in the details of food you'd like to donate</div>
+    </div>
+  </div>
+  <div class="form-card">
+    <div class="form-grid">
+      <div>
+        <label>Food Type</label>
+        <input type="text" id="don-foodtype" placeholder="e.g. Cooked Rice, Bread..." />
+      </div>
+      <div class="form-row">
+        <div>
+          <label>Quantity</label>
+          <input type="text" id="don-qty" placeholder="e.g. 10 kg / 50 packs" />
+        </div>
+        <div>
+          <label>Expiry / Best Before</label>
+          <input type="datetime-local" id="don-expiry" />
+        </div>
+      </div>
+      <div>
+        <label>Pickup Location</label>
+        <input type="text" id="don-location" placeholder="Full address or area" />
+      </div>
+      <button class="submit-btn" onclick="submitDonation()">🍱 Submit Donation</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     PAGE: REQUEST
+═══════════════════════════════════════════════ -->
+<div id="page-request" class="page">
+  <div class="section-header">
+    <div>
+      <div class="section-title">Request Food</div>
+      <div class="section-sub">NGOs and shelters can submit food requirements here</div>
+    </div>
+  </div>
+  <div class="form-card">
+    <div class="form-grid">
+      <div>
+        <label>Food Needed</label>
+        <input type="text" id="req-food" placeholder="e.g. Cooked Meals, Dry Ration..." />
+      </div>
+      <div class="form-row">
+        <div>
+          <label>Quantity Required</label>
+          <input type="text" id="req-qty" placeholder="e.g. 30 servings" />
+        </div>
+        <div>
+          <label>Your Location</label>
+          <input type="text" id="req-location" placeholder="Shelter / NGO address" />
+        </div>
+      </div>
+      <button class="submit-btn" onclick="submitRequest()">🙏 Submit Request</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     PAGE: VIEW DONATIONS
+═══════════════════════════════════════════════ -->
+<div id="page-donations" class="page">
+  <div class="section-header">
+    <div>
+      <div class="section-title">All Donations</div>
+      <div class="section-sub">Live feed of available food donations</div>
+    </div>
+    <button class="btn btn-outline" onclick="loadDonations()">↻ Refresh</button>
+  </div>
+  <div id="donations-content">
+    <div class="loading"><div class="spinner"></div>Loading donations...</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     PAGE: DISTRIBUTIONS
+═══════════════════════════════════════════════ -->
+<div id="page-distribute" class="page">
+  <div class="section-header">
+    <div>
+      <div class="section-title">Distribution Tracker</div>
+      <div class="section-sub">Assign volunteers and track deliveries</div>
+    </div>
+    <button class="btn btn-outline" onclick="loadDistributions()">↻ Refresh</button>
+  </div>
+
+  <!-- Assign Form -->
+  <div class="form-card" style="margin-bottom:2rem;">
+    <div class="section-title" style="font-size:1rem;margin-bottom:1rem;">Assign a Volunteer</div>
+    <div class="form-grid">
+      <div class="form-row">
+        <div>
+          <label>Donation ID</label>
+          <input type="number" id="asgn-donation" placeholder="e.g. 2" min="1" />
+        </div>
+        <div>
+          <label>Volunteer User ID</label>
+          <input type="number" id="asgn-volunteer" placeholder="e.g. 2" min="1" />
+        </div>
+      </div>
+      <button class="submit-btn" onclick="submitAssign()">🚴 Assign Volunteer</button>
+    </div>
+  </div>
+
+  <div id="distributions-content">
+    <div class="loading"><div class="spinner"></div>Loading distributions...</div>
+  </div>
+</div>
+
+<!-- ──────────────────── SCRIPT ──────────────────── -->
+<script>
+  const API = 'http://localhost:3000'; // Change to deployed URL when live
+
+  // ─── PAGE NAVIGATION ──────────────────────────
+function showPage(id) {
+
+  const user = JSON.parse(localStorage.getItem("user"));
+
+  if (!user) {
+    alert("Please login first");
+    return;
+  }
+
+  const role = user.role;
+
+  // 🚫 BLOCK ACCESS BASED ON ROLE
+  if (id === 'donate' && role !== 'donor') {
+    alert("Only donors can donate");
+    return;
+  }
+
+  if (id === 'request' && role !== 'ngo') {
+    alert("Only NGOs can request food");
+    return;
+  }
+
+  if (id === 'distribute' && role !== 'volunteer') {
+    alert("Only volunteers can access distribution");
+    return;
+  }
+
+  // ✅ YOUR ORIGINAL CODE (unchanged)
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+
+  document.getElementById('page-' + id).classList.add('active');
+
+  const tabs = document.querySelectorAll('.nav-tab');
+  const map  = { home:0, donate:1, request:2, donations:3, distribute:4 };
+  tabs[map[id]].classList.add('active');
+
+  if (id === 'donations')   loadDonations();
+  if (id === 'distribute')  loadDistributions();
+  if (id === 'home')        loadStats();
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+
+  // ─── TOAST ────────────────────────────────────
+  function toast(msg, isError = false) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className   = 'show' + (isError ? ' error' : '');
+    setTimeout(() => el.className = '', 3500);
+  }
+
+  // ─── STATS ────────────────────────────────────
+  async function loadStats() {
+    try {
+      const r = await fetch(`${API}/stats`);
+      const d = await r.json();
+      document.getElementById('s-donations').textContent  = d.total_donations ?? '–';
+      document.getElementById('s-requests').textContent   = d.total_requests  ?? '–';
+      document.getElementById('s-delivered').textContent  = d.delivered       ?? '–';
+      document.getElementById('s-volunteers').textContent = d.volunteers      ?? '–';
+    } catch { /* API not running: silently skip */ }
+  }
+
+  // ─── SUBMIT DONATION ──────────────────────────
+  async function submitDonation() {
+  const user = JSON.parse(localStorage.getItem("user"));
+
+  // ❌ not logged in
+  if (!user) {
+    return toast("⚠️ Please login first", true);
+  }
+
+  // ❌ wrong role
+  if (user.role !== "donor") {
+    return toast("❌ Only donors can donate food", true);
+  }
+
+  const body = {
+    donor_id   : user.user_id,   // ✅ AUTO from login
+    food_type  : document.getElementById('don-foodtype').value,
+    quantity   : document.getElementById('don-qty').value,
+    expiry_time: document.getElementById('don-expiry').value,
+    location   : document.getElementById('don-location').value,
+  };
+
+  if (!body.food_type || !body.quantity || !body.expiry_time || !body.location)
+    return toast('⚠️ Please fill all fields', true);
+
+  try {
+    const res  = await fetch(`${API}/donate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+
+    toast('✅ Donation submitted! ID: ' + data.donation_id);
+
+    // clear fields (NO user id now)
+    ['don-foodtype','don-qty','don-expiry','don-location']
+      .forEach(id => document.getElementById(id).value = '');
+
+  } catch (e) {
+    toast('❌ ' + e.message, true);
+  }
+}
+
+  // ─── SUBMIT REQUEST ───────────────────────────
+async function submitRequest() {
+  const user = JSON.parse(localStorage.getItem("user")); // ✅ get logged user
+
+  const body = {
+    requester_id: user.user_id,   // ✅ AUTO user id
+    food_needed : document.getElementById('req-food').value,
+    quantity    : document.getElementById('req-qty').value,
+    location    : document.getElementById('req-location').value,
+  };
+
+  if (!body.food_needed || !body.quantity || !body.location)
+    return toast('⚠️ Please fill all fields', true);
+
+  try {
+    const res  = await fetch(`${API}/request`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+
+    toast('✅ Request submitted! ID: ' + data.request_id);
+
+    // clear inputs (NO user id now)
+    ['req-food','req-qty','req-location'].forEach(id =>
+      document.getElementById(id).value = ''
+    );
+
+  } catch (e) {
+    toast('❌ ' + e.message, true);
+  }
+}
+
+  // ─── LOAD DONATIONS ───────────────────────────
+  async function loadDonations() {
+    const el = document.getElementById('donations-content');
+    el.innerHTML = '<div class="loading"><div class="spinner"></div>Loading...</div>';
+    try {
+      const res  = await fetch(`${API}/donations`);
+      const data = await res.json();
+      if (!data.length) {
+        el.innerHTML = '<div class="empty"><div class="empty-icon">📭</div>No donations yet. Be the first!</div>';
+        return;
+      }
+      el.innerHTML = `
+        <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>ID</th><th>Donor</th><th>Food</th><th>Qty</th><th>Expires</th><th>Location</th><th>Status</th>
+          </tr></thead>
+          <tbody>
+            ${data.map(d => `<tr>
+              <td><strong>#${d.donation_id}</strong></td>
+              <td>${esc(d.donor_name)}</td>
+              <td>${esc(d.food_type)}</td>
+              <td>${esc(d.quantity)}</td>
+              <td style="color:var(--amber)">${fmtDate(d.expiry_time)}</td>
+              <td style="color:var(--muted)">${esc(d.location)}</td>
+              <td>${statusBadge(d.status)}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+        </div>`;
+    } catch(e) {
+      el.innerHTML = '<div class="empty"><div class="empty-icon">⚠️</div>Could not reach API. Is the backend running?</div>';
+    }
+  }
+
+  // ─── LOAD DISTRIBUTIONS ───────────────────────
+  async function loadDistributions() {
+    const el = document.getElementById('distributions-content');
+    el.innerHTML = '<div class="loading"><div class="spinner"></div>Loading...</div>';
+    try {
+      const res  = await fetch(`${API}/distributions`);
+      const data = await res.json();
+      if (!data.length) {
+        el.innerHTML = '<div class="empty"><div class="empty-icon">🚴</div>No assignments yet.</div>';
+        return;
+      }
+      el.innerHTML = `
+        <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>ID</th><th>Food</th><th>Qty</th><th>Pickup</th><th>Volunteer</th><th>Status</th><th>Action</th>
+          </tr></thead>
+          <tbody>
+            ${data.map(d => `<tr>
+              <td><strong>#${d.distribution_id}</strong></td>
+              <td>${esc(d.food_type)}</td>
+              <td>${esc(d.quantity)}</td>
+              <td style="color:var(--muted)">${esc(d.pickup_location)}</td>
+              <td>${esc(d.volunteer_name)}</td>
+              <td>${d.status === 'delivered'
+                ? '<span class="badge badge-green">✓ Delivered</span>'
+                : '<span class="badge badge-amber">⏳ Pending</span>'}</td>
+              <td>${d.status !== 'delivered'
+                ? `<button class="assign-btn" onclick="markDelivered(${d.distribution_id})">Mark Delivered</button>`
+                : '–'}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+        </div>`;
+    } catch(e) {
+      el.innerHTML = '<div class="empty"><div class="empty-icon">⚠️</div>Could not reach API. Is the backend running?</div>';
+    }
+  }
+
+  // ─── ASSIGN ───────────────────────────────────
+  async function submitAssign() {
+    const body = {
+      donation_id : document.getElementById('asgn-donation').value,
+      volunteer_id: document.getElementById('asgn-volunteer').value,
+    };
+    if (!body.donation_id || !body.volunteer_id)
+      return toast('⚠️ Fill both Donation ID and Volunteer ID', true);
+    try {
+      const res  = await fetch(`${API}/assign`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      toast('✅ Assigned! Distribution ID: ' + data.distribution_id);
+      loadDistributions();
+    } catch(e) {
+      toast('❌ ' + e.message, true);
+    }
+  }
+
+  // ─── MARK DELIVERED ───────────────────────────
+  async function markDelivered(id) {
+    try {
+      const res = await fetch(`${API}/distributions/${id}/deliver`, { method: 'PATCH' });
+      const d   = await res.json();
+      if (!res.ok) throw new Error(d.error);
+      toast('🎉 Delivery confirmed!');
+      loadDistributions();
+      loadStats();
+    } catch(e) {
+      toast('❌ ' + e.message, true);
+    }
+  }
+
+  // ─── HELPERS ──────────────────────────────────
+  function esc(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+  function fmtDate(dt) {
+    if (!dt) return '–';
+    return new Date(dt).toLocaleString('en-IN', { dateStyle:'short', timeStyle:'short' });
+  }
+  function statusBadge(s) {
+    const map = {
+      available: '<span class="badge badge-green">Available</span>',
+      assigned:  '<span class="badge badge-amber">Assigned</span>',
+      delivered: '<span class="badge badge-blue">Delivered</span>',
+    };
+    return map[s] || `<span class="badge">${esc(s)}</span>`;
+  }
+
+  // ─── INIT ─────────────────────────────────────
+  loadStats();
+
+function applyRoleUI() {
+  const user = JSON.parse(localStorage.getItem("user"));
+  if (!user) return;
+
+  const role = user.role;
+
+  // hide all first
+  document.getElementById("nav-donate").style.display = "none";
+  document.getElementById("nav-request").style.display = "none";
+  document.getElementById("nav-distribute").style.display = "none";
+
+  // show based on role
+  if (role === "donor") {
+    document.getElementById("nav-donate").style.display = "block";
+  }
+
+  if (role === "ngo") {
+    document.getElementById("nav-request").style.display = "block";
+  }
+
+  if (role === "volunteer") {
+    document.getElementById("nav-distribute").style.display = "block";
+  }
+}
+
+function logout() {
+  localStorage.removeItem("user");
+  location.reload();
+}
+
+function loadAuthUI() {
+  const user = JSON.parse(localStorage.getItem("user"));
+  const auth = document.getElementById("authSection");
+
+  if (!auth) return;
+
+  if (user) {
+    auth.innerHTML = `
+      <span>👤 ${user.name} (${user.role})</span>
+      <button class="nav-tab" onclick="logout()">Logout</button>
+    `;
+  } else {
+    auth.innerHTML = `
+      <button class="nav-tab" onclick="window.location.href='login.html'">Login</button>
+      <button class="nav-tab" onclick="window.location.href='signup.html'">Signup</button>
+    `;
+  }
+}
+
+async function loadTopDonors() {
+  const el = document.getElementById("top-donors");
+
+  try {
+    const res = await fetch(`${API}/top-donors`);
+    const data = await res.json();
+
+    if (!data.length) {
+      el.innerHTML = "No donors yet";
+      return;
+    }
+
+    el.innerHTML = `
+  <div style="display:grid; gap:12px; margin-top:1rem;">
+    ${data.map((d, i) => {
+      const medals = ["🥇", "🥈", "🥉"];
+
+      const colors = [
+        "background:#fff8dc; color:#333; border:1px solid #ffe58f;", // light gold
+        "background:#f5f5f5; color:#333; border:1px solid #d9d9d9;", // light silver
+        "background:#fdf2e9; color:#333; border:1px solid #e6c3a5;"  // light bronze
+      ];
+
+      return `
+        <div style="
+          padding:14px;
+          border-radius:12px;
+          display:flex;
+          justify-content:space-between;
+          align-items:center;
+          font-weight:600;
+          ${colors[i]}
+        ">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span style="font-size:1.2rem;">${medals[i]}</span>
+            <span>${d.name}</span>
+          </div>
+
+          <div style="font-size:0.9rem;">
+            ${d.total_donations} donations
+          </div>
+        </div>
+      `;
+    }).join('')}
+  </div>
+`;
+  } catch (e) {
+    el.innerHTML = "Error loading donors";
+  }
+}
+
+// RUN FUNCTION
+window.onload = function () {
+  loadAuthUI();
+  applyRoleUI();   // ✅ ADD THIS
+  loadTopDonors();
+};
+</script>
+</body>
+</html>
